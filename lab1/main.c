@@ -41,6 +41,7 @@ void logic()
 		//times() calculates all user, sys, utime children, and sys time children.
 		times(&t);
 		printProcessInformation((int)pid, status);
+		//clock tics / tics per second will give us the amount of time a process took
 		printf("USER: %f, SYS: %f \n", (double)t.tms_utime / (double)ticsPerSecond, (double)t.tms_stime);
 		printf("CUSER: %f, CSYS: %f \n", (double)t.tms_cutime / (double)ticsPerSecond, (double)t.tms_cstime / (double)ticsPerSecond);
 	}
