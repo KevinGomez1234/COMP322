@@ -7,7 +7,7 @@
 
 void printProcessInformation();
 void logic();
-//gets new variables after executing a new process
+
 int main(void)
 {
 	logic();
@@ -15,17 +15,19 @@ int main(void)
 
 void logic()
 {
+	//variables for start time and end time
 	long time_start, time_end;
 	int status = 0;
-	//tms has all of the variables we need to report process times, returns tics 
+	//tms has all of the variables we need to report process times, it returns tics 
 	struct tms t;
+	//used to get the time each process took 
 	int ticsPerSecond = sysconf(_SC_CLK_TCK);
 	//start of the program 
 	time_start = time(NULL); 
 	printf("START: %li\n", time_start);
 	//spawn a process
 	pid_t pid = fork();
-	//we are the child process, print information
+	//we are the child process, print information and exit
 	if((int)pid == 0)
 	{
 		printProcessInformation((int)pid, status);
@@ -52,6 +54,7 @@ void printProcessInformation(int pid, int status)
 	//we are the parent print the exit status and cpid
 	if (pid != 0)
 	{
+		//returns the exit status.
 		int returned = WEXITSTATUS(status);
 		printf("PPID: %d, PID: %d, CPID: %d, RETVAL: %d \n", getppid(), getpid(), pid, returned);
 	}
