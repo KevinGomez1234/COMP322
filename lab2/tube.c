@@ -91,13 +91,13 @@ void runArgs(int argc, char* argv[], int count)
 			}
 			//parent process prints process info, waits for children, and closes end of pipes.
 			else if((int)childB > 0) {
-				fprintf(stderr, "%s $$ =  %d\n", args1[0],(int)childA);
-				fprintf(stderr, "%s $$ = %d\n", args2[0],(int)childB);
+				fprintf(stderr, "%s: $$ =  %d\n", args1[0],(int)childA);
+				fprintf(stderr, "%s: $$ = %d\n", args2[0],(int)childB);
 				waitpid((int)childA, &statusA, 0);
 				waitpid((int)childB, &statusB, 0);
 				close(the_pipe[1]);
 				close(the_pipe[0]);
-				fprintf(stderr, "%s $? = %d\n%s $? = %d\n", args1[0], WEXITSTATUS(statusA), args2[0], WEXITSTATUS(statusB));
+				fprintf(stderr, "%s: $? = %d\n%s: $? = %d\n", args1[0], WEXITSTATUS(statusA), args2[0], WEXITSTATUS(statusB));
 			}
 		}
 	}
