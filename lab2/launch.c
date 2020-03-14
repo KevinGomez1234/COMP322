@@ -21,12 +21,13 @@ void logic(char** argv)
 	int returned;
 	pid_t process_1 = fork();
 	
-	// we are the child
+	// we are the child, execute the argument.
 	if((int)process_1 == 0)
 	{
 		execve(argv[1], argv+1, NULL);
 		exit(0);
 	}
+	//parent prints pid and return status
 	else if((int)process_1 > 0)
 	{	
 		fprintf(stderr ,"%s: $$ = %d\n", argv[1], process_1);
@@ -34,6 +35,4 @@ void logic(char** argv)
 		returned = WEXITSTATUS(status);
 		fprintf(stderr, "%s: $? = %d\n", argv[1], returned);
 	}
-
 }
-
