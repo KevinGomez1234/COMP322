@@ -59,7 +59,6 @@ void runArgs(int argc, char* argv[], int count)
 	char* args1[count+1];
 	char* args2[argc-count];
 	int counter_2 = 0;
-
 	//split args and put them into seperate char arrays, to use on execve().
 	for(int i = 1; i<count; i++)
 	{
@@ -74,12 +73,10 @@ void runArgs(int argc, char* argv[], int count)
 	}
 	//make last element of this split arg NULL
 	args2[counter_2+1] = NULL;
-
 	//make a pipe for IPC
 	pipe_return_value = pipe(the_pipe);
 	//fork a child
 	childA = fork();
-
 	if(pipe_return_value == -1)
 	{
 		perror("initializing pipe did not work");
@@ -94,7 +91,6 @@ void runArgs(int argc, char* argv[], int count)
 			dup2(the_pipe[1], STDOUT_FILENO);
 			execve(args1[0], args1, NULL);
 		}
-
 		else if((int)childA > 0)
 		{			
 			//fork another child
@@ -107,7 +103,7 @@ void runArgs(int argc, char* argv[], int count)
 				dup2(the_pipe[0], STDIN_FILENO);
 				execve(args2[0], args2, NULL);
 			}
-			//parent process finishes everything. 
+			//parent process prints process info, waits for children, and closes end of pipes.
 			else if((int)childB > 0)
 			{
 				fprintf(stderr, "%s $$ =  %d\n", args1[0],(int)childA);
