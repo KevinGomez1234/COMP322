@@ -30,7 +30,6 @@ void logic(int argc, char* argv[])
 	{
 		runArgs(argc, argv, split);
 	}
-	
 }
 
 int indexAtComma(int argc, char* argv[])
@@ -103,13 +102,13 @@ void runArgs(int argc, char* argv[], int count)
 			}
 			else if((int)childB > 0)
 			{
-				fprintf(stderr, "Child A PID: %d\n", (int)childA);
-				fprintf(stderr, "Child B PID: %d\n", (int)childB);
+				fprintf(stderr, "%s $$ =  %d\n", args1[0],(int)childA);
+				fprintf(stderr, "%s $$ = %d\n", args2[0],(int)childB);
 				waitpid((int)childA, &statusA, 0);
 				waitpid((int)childB, &statusB, 0);
 				close(the_pipe[1]);
 				close(the_pipe[0]);
-				fprintf(stderr, "Chila A %d\nChild B %d\n", WEXITSTATUS(statusA), WEXITSTATUS(statusB));
+				fprintf(stderr, "%s $? = %d\n%s $? = %d\n", args1[0], WEXITSTATUS(statusA), args2[0], WEXITSTATUS(statusB));
 			}
 		}
 	}
