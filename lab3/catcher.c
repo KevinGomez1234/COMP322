@@ -11,7 +11,8 @@ int returnSigNumber();
 int returnSigIndex();
 //[31] [32] special case signals (duplicate signal numbers)
 static const char signalNumbers [33] [11] = {"HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT", "BUS", "FPE", "KILL", "USR1", "SEGV", "USR2", "PIPE", "ALRM", "TERM", "STKFLT", "CHLD", "CONT", "STOP", "TSTP", "TTIN", "TTOU", "URG", "XCPU", "XFSZ", "VTALRM", "PROF", "WINCH", "IO", "PWR", "SYS", "IOT", "POLL"};
-int counter = 0;
+//global variables are needed since handler can't have parameters, term_counter counts the number of times TERM is executed within the handler.
+int term_counter = 0;
 
 int main(int argc, char* argv[])
 {
@@ -19,25 +20,28 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
+//handler for all our signals
 void myhandle(int mysignal)
 {
 	int signaleName = returnSigIndex(mysignal);
 	if(mysignal == 15)
-		counter++;
-	fprintf(stderr, "SIG%s caught at %li \n", signalNumbers[signaleName], time(NULL));
+		term_counter++;
+	fprintf(stdout, "SIG%s caught at %li \n", signalNumbers[signaleName], time(NULL));
+	//register signal again
 	signal(mysignal, myhandle);
 }
 
-//logic for the program
+//logic for the program also checks for errors
 void logic(int argc, char* argv[])
 {
 	int signals_caught = 0;
-	// no args then it's an error
+	// no args means no signals to catch, so it's an error.
 	if(argc < 2)
 		printf("Improper usage(No signals in arguments): ./catcher <signal>... <signal>\n");
 	//check the args for proper signals
 	else {
-		fprintf(stderr, "%s: $$ = %d \n", argv[0],getpid());	
+		fprintf(stderr, "catcher: $$ = %d \n",getpid());	
+		//register all the proper handlers
 		for(int i = 1; i<argc; i++) {
 			int sigNumber = returnSigNumber(argv[i]);
 			if(sigNumber != -1)
@@ -46,15 +50,16 @@ void logic(int argc, char* argv[])
 			else
 				continue;
 		}
-
+		//wait for signals
 		while(1) {
-			//wait for handle to finish
+			//wait for handle to finish, count it as a signal caught
 			if (pause())
 				signals_caught++;
-			if(counter == 3)
+			//after 3 successive term signals, stop
+			if(term_counter == 4)
 				break;
 		}
-		printf("Signals caught: %d\n", signals_caught);
+		fprintf(stderr, "catcher: Total signals caught = %d\n", signals_caught);
 	}
 }
 
@@ -65,11 +70,12 @@ int returnSigNumber(char string[])
 	int sigNumber = -1;
 	//had to use an array to map signals b/c sys_signame only works on os x, and also sys_siglist[] only has decritpions for signals and does not their mneumonic signal name i.e sys_siglist[1] = "HANHUP" and not "SIGHUP"
 	for(int i = 0; i<31;i++) {
+		//Had to use strcmp to map the proper command line args to our signalNumbers array.
 		if(!strcmp(string, signalNumbers[i])) {
 			sigNumber = i + 1;
 			break;			
 		}
-		//special cases IOT = 6, POLL = 29, UNUSED = 31
+		//special cases IOT = 6, POLL = 29
 		else if(!strcmp(string, "IOT")| !strcmp(string, "POLL")) {
 			if(!strcmp(string, "IOT"))
 				sigNumber = SIGIOT;
@@ -80,7 +86,7 @@ int returnSigNumber(char string[])
 	return sigNumber;
 }
 
-//returns the proper index in our array containing the names of the signals
+//returns the proper index in our array containing the names of the signals i.e returnSigIndex(1) = signalNumbers[0] = "HUP"
 int returnSigIndex(int signalNumber)
 {
 	int arrayIndex;
@@ -95,4 +101,3 @@ int returnSigIndex(int signalNumber)
 	}
 	return arrayIndex;
 }
-
