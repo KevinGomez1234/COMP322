@@ -10,7 +10,7 @@ void myhandle();
 int returnSigNumber();
 int returnSigIndex();
 //[31] [32] special case signals (duplicate signal numbers)
-static const char signalNumbers [33] [11] = {"HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT", "BUS", "FPE", "KILL", "USR1", "SEGV", "USR2", "PIPE", "ALRM", "TERM", "STKFLT", "CHLD", "CONT", "STOP", "TSTP", "TTIN", "TTOU", "URG", "XCPU", "XFSZ", "VTALRM", "PROF", "WINCH", "IO", "PWR", "SYS", "IOT", "POLL"};
+static const char signalNumbers [31] [11] = {"HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT", "BUS", "FPE", "KILL", "USR1", "SEGV", "USR2", "PIPE", "ALRM", "TERM", "STKFLT", "CHLD", "CONT", "STOP", "TSTP", "TTIN", "TTOU", "URG", "XCPU", "XFSZ", "VTALRM", "PROF", "WINCH", "IO", "PWR", "SYS"};
 //global variables are needed since handler can't have parameters, term_counter counts the number of times TERM is executed within the handler.
 int term_counter = 0;
 
@@ -75,16 +75,13 @@ int returnSigNumber(char string[])
 			sigNumber = i + 1;
 			break;			
 		}
-		//special cases IOT = 6, POLL = 29
-		else if(!strcmp(string, "IOT")| !strcmp(string, "POLL"))
-		{
+		//special case for IOT = 6
+		else if(!strcmp(string, "IOT")) {
 			if(!strcmp(string, "IOT"))
 				sigNumber = SIGIOT;
-			else if(!strcmp(string, "POLL"))
-				sigNumber = SIGPOLL;
 		}
-		else if(!strcmp(string, "KILL") | !strcmp(string, "STOP"))
-		{
+		//ignore kill and stop
+		else if(!strcmp(string, "KILL") | !strcmp(string, "STOP")) {
 			sigNumber = -1;
 		}
 	}
@@ -97,12 +94,6 @@ int returnSigIndex(int signalNumber)
 	int arrayIndex;
 	if(signalNumber >= 1 && signalNumber <= 31 ) {
 		arrayIndex = signalNumber - 1;
-	}
-	else if(signalNumber == SIGIO) {
-		arrayIndex = 31;
-	}
-	else if(signalNumber == SIGPOLL) {
-		arrayIndex = 32;
 	}
 	return arrayIndex;
 }
