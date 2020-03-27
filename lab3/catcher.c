@@ -63,7 +63,7 @@ void logic(int argc, char* argv[])
 	}
 }
 
-//Returns the corresponding signal number for a string i.e TERM = 15
+//Returns the corresponding signal number for a string i.e TERM = 15, returns -1 on sigstop and sigkill
 int returnSigNumber(char string[])
 {
 	//if we retunr -1 the signal does not exist in our map. 
@@ -76,11 +76,16 @@ int returnSigNumber(char string[])
 			break;			
 		}
 		//special cases IOT = 6, POLL = 29
-		else if(!strcmp(string, "IOT")| !strcmp(string, "POLL")) {
+		else if(!strcmp(string, "IOT")| !strcmp(string, "POLL"))
+		{
 			if(!strcmp(string, "IOT"))
 				sigNumber = SIGIOT;
 			else if(!strcmp(string, "POLL"))
 				sigNumber = SIGPOLL;
+		}
+		else if(!strcmp(string, "KILL") | !strcmp(string, "STOP"))
+		{
+			sigNumber = -1;
 		}
 	}
 	return sigNumber;
