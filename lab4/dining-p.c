@@ -22,7 +22,7 @@ int cycles;
 //array of names of semaphores, need to find a
 char* names[5] = {"a0 ","a1 ", "a2 ", "a3 ", "a4 "};
 //semaphor for each chopstick
-sem_t* chopsticks[5];
+sem_t* chopsticks[5]; 
 int seats;
 int main(int argc, char* argv[])
 {
@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 //seats
 	seats = atoi(argv[1]);
 //curent philosopher we start at 1
-	phil = atoi(argv[2]);
+	phil = atoi(argv[2]) - 1;
 	initializeSemapores();
 	eat_and_think_cycle();
 	return 0;
@@ -41,9 +41,9 @@ void initializeSemapores()
 {
 	chopsticks [phil] = sem_open(names[phil], O_CREAT|O_EXCL, 0666, 1);
 	chopsticks [(phil+1)%seats] = sem_open(names[(phil+1)%seats], O_CREAT|O_EXCL, 0666);
-	if(chopsticks[phil] == SEM_FAILED)
+	if(chopsticks[phil-1] == SEM_FAILED)
 		perror("sem_open failed");
-	if(chopsticks [(phil+1)%seats] == SEM_FAILED)
+	if(chopsticks [phil%seats] == SEM_FAILED)
 		perror("sem_open failed");
 }
 
