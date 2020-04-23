@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -8,7 +9,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
-
+#include <string.h>
 
 void eat();
 void thinking();
@@ -19,11 +20,11 @@ int phil;
 int seats;
 int cycles;
 
-//array of names of semaphores, need to find a
-char* names[5] = {"a0 ","a1 ", "a2 ", "a3 ", "a4 "};
-//semaphor for each chopstick
-sem_t* chopsticks[5]; 
-int seats;
+//semaphor for each chopstick left and right chopstick
+sem_t* chopsticks[100];
+char buffer1[100];
+char buffer2[100];
+
 int main(int argc, char* argv[])
 {
 	(void) argc;
@@ -39,12 +40,21 @@ int main(int argc, char* argv[])
 //initializing the chopsticks
 void initializeSemapores()
 {
-	chopsticks [phil] = sem_open(names[phil], O_CREAT|O_EXCL, 0666, 1);
-	chopsticks [(phil+1)%seats] = sem_open(names[(phil+1)%seats], O_CREAT|O_EXCL, 0666);
-	if(chopsticks[phil-1] == SEM_FAILED)
-		perror("sem_open failed");
-	if(chopsticks [phil%seats] == SEM_FAILED)
-		perror("sem_open failed");
+
+	char phil_chop_index_1[32];
+	char phil_chop_index_2[32];
+	sprintf(phil_chop_index_1, "%d", phil);
+	sprintf(phil_chop_index_2, "%d", (phil+1)%seats);
+	sprintf(buffer1, "/c_s%s", phil_chop_index_1);
+	sprintf(buffer2, "/c_s%s", phil_chop_index_2);
+	printf("%s\n", buffer1);
+	printf("%s\n", buffer2);
+	chopsticks [phil] = sem_open(buffer1, O_CREAT, 0666);
+	chopsticks [(phil+1)%seats] = sem_open(buffer2, O_CREAT, 0666);
+	if(chopsticks[phil] == SEM_FAILED)
+		perror("chop[left]");
+	if(chopsticks[(phil+1)%seats] == SEM_FAILED)
+		perror("chop[right]");
 }
 
 void eat_and_think_cycle()
@@ -55,28 +65,29 @@ void eat_and_think_cycle()
 	do
 	{
 		sem_wait(chopsticks[phil]);
-		sem_wait(chopsticks[(phil+1) % seats]);
+		sem_wait(chopsticks[(phil+1)%seats]);
 		eat();
-		sem_post(chopsticks[phil]);
-		sem_post(chopsticks[(phil+1) % seats]);
+		sem_post(chopsticks[(phil+1)%seats]);
+		sem_post(chopsticks[(phil+1)%seats]);
 		cycles++;
 		thinking();
 	}while(1);
-
 }
 
 void signalHandler(int mysignal)
 {
+	signal(15, signalHandler);
 	if(mysignal == 15)
 	{
 		sem_close(chopsticks[phil]);
 		sem_close(chopsticks[(phil+1)%seats]);
-		sem_unlink(names[phil]);
-		sem_unlink(names[(phil+1)%seats]);
+		sem_unlink(buffer1);
+		sem_unlink(buffer2);
 		sem_destroy(chopsticks[phil]);
 		sem_destroy(chopsticks[(phil+1)%seats]);
 	}
-	fprintf(stderr, "Philosopher%d completed %d \n", phil, cycles);
+	fprintf(stderr, "Philosopher%d completed %d cycles\n", phil+1, cycles);
+	exit(0);
 }
 
 //done
@@ -85,7 +96,7 @@ void eat()
 	srand(time(0));
 	int random = rand() % (1000000 + 1 - 0) + 0;
 	usleep(random);
-	printf("Philosopher %d is eating pid %d\n", phil, getpid());
+	printf("Philosopher %d is eating pid %d\n", phil+1, getpid());
 }
 
 void thinking()
@@ -93,5 +104,5 @@ void thinking()
 	srand(time(0));
 	int random = rand() % (1000000 + 1 - 0) + 0;
 	usleep(random);
-	printf("Philosopher %d is thinking pid %d\n", phil, getpid());
+	printf("Philosopher %d is thinking pid %d\n", phil+1, getpid());
 }
