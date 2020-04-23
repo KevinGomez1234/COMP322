@@ -47,8 +47,6 @@ void initializeSemapores()
 	sprintf(phil_chop_index_2, "%d", (phil+1)%seats);
 	sprintf(buffer1, "/c_s%s", phil_chop_index_1);
 	sprintf(buffer2, "/c_s%s", phil_chop_index_2);
-	printf("%s\n", buffer1);
-	printf("%s\n", buffer2);
 	chopsticks [phil] = sem_open(buffer1, O_CREAT, 0666);
 	chopsticks [(phil+1)%seats] = sem_open(buffer2, O_CREAT, 0666);
 	if(chopsticks[phil] == SEM_FAILED)
