@@ -15,13 +15,14 @@ void logic(int argc, char* argv[])
 {
 	unsigned int pageNumber;
 	unsigned int offset;
-	unsigned int address = atoi(argv[1]);
+
 	if (argc < 2)
 	{
 		printf("Improper usage: ./paging <int>\n");
 	}
 	else
 	{
+		unsigned int address = atoi(argv[1]);
 		pageNumber = calculatePageNumber(address);
 		offset = calculateOffset(address);
 		printf("The address %d contains:\nPage number = %d \nOffset = %d\n", address, pageNumber, offset);
