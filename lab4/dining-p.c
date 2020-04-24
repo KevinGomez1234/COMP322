@@ -17,7 +17,6 @@ void eat_and_think_cycle();
 void initializeSemapores();
 void signalHandler();
 
-int state[3];
 int phil;
 int seats;
 int cycles;
