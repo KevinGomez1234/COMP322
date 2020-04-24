@@ -11,6 +11,9 @@
 #include <signal.h>
 #include <string.h>
 
+//This program is meant to run many times simultaneously. Every process is a philosopher competing for a chopstick resource. 
+//Removed hold and wait condition to remove deadlock by not picking up any chopsticks if either left or right chopstick is being held.
+
 void eat();
 void thinking();
 void eat_and_think_cycle();
@@ -27,20 +30,31 @@ char buffer2[50];
 
 int main(int argc, char* argv[])
 {
-	(void) argc;
-	//seats
-	seats = atoi(argv[1]);
-	//current philosopher position. We start from 1, but have to map it to 0. 
-	phil = atoi(argv[2]) - 1;
-	if(phil+1 > seats)
+	//error checking and logic
+	if(argc < 3)
 	{
-		printf("not enough seats\n");
-		exit(1);
+		printf("not enough args: ./dining-p <seats> <position>\n");
 	}
-	else
+
+	else if(argc >= 3)
 	{
-		initializeSemapores();
-		eat_and_think_cycle();
+		//since we start counting philosophers from 0 subtract 1 from seats.
+		seats = atoi(argv[1])-1;
+		//Phil position 0 through N. 
+		phil = atoi(argv[2]);
+		//phil position is greater than seats available error, don't initialize chopsticks, exit with error flag.
+		if(phil > seats)
+		{
+			printf("not enough seats\n");
+			exit(1);
+		}
+		//else initialize semaphores and start eat/think cycle.
+		else
+		{
+			initializeSemapores();
+			eat_and_think_cycle();
+		}
+
 	}
 	return 0;
 }
@@ -79,7 +93,7 @@ void eat_and_think_cycle()
 		//check if chopsticks are being used (if either sem_values == 0). If either left or right chopstick is being used then don't pick any of them up, else pick both up.
 		sem_getvalue(chopsticks[0], &sem_val_chopstick1);
 		sem_getvalue(chopsticks[1], &sem_val_chopstick2); 
-		//loop until both semaphores are available, this prevents deadlock. 
+		//loop until both semaphores are available, this prevents deadlock by removing hold and wait.
 		if(sem_val_chopstick1 == 0 || sem_val_chopstick2 == 0)
 			continue;
 		else
@@ -108,7 +122,7 @@ void signalHandler(int mysignal)
 		sem_unlink(buffer2);
 		//sem_destroy(chopstick[i]) used for unamed semaphores.
 	}
-	fprintf(stderr, "Philosopher%d completed %d cycles\n", phil+1, cycles);
+	fprintf(stderr, "Philosopher%d completed %d cycles\n", phil, cycles);
 	exit(0);
 }
 
@@ -118,7 +132,7 @@ void eat()
 	srand(time(0));
 	int random = rand() % (1000000 + 1 - 0) + 0;
 	usleep(random);
-	printf("Philosopher %d is eating\n", phil+1);
+	printf("Philosopher %d is eating. PID: %d\n", phil, getpid());
 }
 
 void thinking()
@@ -126,5 +140,5 @@ void thinking()
 	srand(time(0));
 	int random = rand() % (1000000 + 1 - 0) + 0;
 	usleep(random);
-	printf("Philosopher %d is thinking\n", phil+1);
+	printf("Philosopher %d is thinking. PID: %d\n", phil, getpid());
 }
