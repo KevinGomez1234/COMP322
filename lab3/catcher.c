@@ -4,6 +4,8 @@
 #include <string.h>
 #include <signal.h>
 #include <time.h>
+#define TRUE 1
+#define FALSE 0
 
 void logic();
 void myhandle();
@@ -13,6 +15,7 @@ int returnSigIndex();
 static const char signalNumbers [31] [11] = {"HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT", "BUS", "FPE", "KILL", "USR1", "SEGV", "USR2", "PIPE", "ALRM", "TERM", "STKFLT", "CHLD", "CONT", "STOP", "TSTP", "TTIN", "TTOU", "URG", "XCPU", "XFSZ", "VTALRM", "PROF", "WINCH", "IO", "PWR", "SYS"};
 //global variables are needed since handler can't have parameters, term_counter counts the number of times TERM is executed within the handler.
 int term_counter = 0;
+int term_flag = FALSE;
 
 int main(int argc, char* argv[])
 {
@@ -24,8 +27,11 @@ int main(int argc, char* argv[])
 void myhandle(int mysignal)
 {
 	int signaleName = returnSigIndex(mysignal);
+	//if signal is caught count it, else reset until there are 3 succesive SIGTERM signals
 	if(mysignal == 15)
-		term_counter++;
+		term_counter++;		
+	else
+		term_counter = 0;
 	fprintf(stdout, "SIG%s caught at %li \n", signalNumbers[signaleName], time(NULL));
 	//register signal again
 	signal(mysignal, myhandle);
@@ -56,7 +62,7 @@ void logic(int argc, char* argv[])
 			if (pause())
 				signals_caught++;
 			//after 3 successive term signals, stop
-			if(term_counter == 4)
+			if(term_counter == 3)
 				break;
 		}
 		fprintf(stderr, "catcher: Total signals caught = %d\n", signals_caught);
