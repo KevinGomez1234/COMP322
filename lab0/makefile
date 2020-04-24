@@ -1,4 +1,15 @@
-target: main.o 
-	gcc main.o -o lab0 -lm -Wall -Wextra
-main.o: main.c 
-	gcc -c main.c -Wall -Wextra
+EXECUTABLES=zero-one
+SRC=zero-one.c
+OBJ=zero-one.o
+
+CC=gcc
+CFLAGS= -g -Wall -Wextra
+
+all:$(EXECUTABLES)
+
+$(EXECUTABLES): $(SRC)
+        $(CC) $(CFLAGS) -c $(SRC)
+        $(CC) $(CFLAGS) -o $@ $(OBJ) -lm
+
+clean:
+        rm -f $(EXECUTABLES) $(OBJ) *~ 
