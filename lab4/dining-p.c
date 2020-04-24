@@ -17,6 +17,7 @@ void eat_and_think_cycle();
 void initializeSemapores();
 void signalHandler();
 
+int state[3];
 int phil;
 int seats;
 int cycles;
@@ -43,14 +44,12 @@ int main(int argc, char* argv[])
 		initializeSemapores();
 		eat_and_think_cycle();
 	}
-
 	return 0;
 }
 
 //initializing the chopsticks
 void initializeSemapores()
 {
-
 	char phil_chop_index_1[32];
 	char phil_chop_index_2[32];
 	sprintf(phil_chop_index_1, "%d", phil);
@@ -76,16 +75,30 @@ void eat_and_think_cycle()
 //open up our semaphores to be used with
 	do
 	{
-		sem_wait(chopsticks[0]);
-		sem_wait(chopsticks[1]);	
-		eat();
-		sem_post(chopsticks[0]);
-		sem_post(chopsticks[1]);
-		cycles++;
-		thinking();
+		//used to store value of semaphores to prevent deadlock.
+		int sem_val_chopstick1;
+		int sem_val_chopstick2;
+		//check if chopsticks are being used (if either sem_values == 0). If either left or right chopstick is being used then don't pick any of them up, else pick both up.
+		sem_getvalue(chopsticks[0], &sem_val_chopstick1);
+		sem_getvalue(chopsticks[1], &sem_val_chopstick2); 
+		//loop until both semaphores are available
+		if(sem_val_chopstick1 == 0 || sem_val_chopstick2 == 0)
+			continue;
+		else
+		{
+			sem_wait(chopsticks[0]);
+			sem_wait(chopsticks[1]);	
+			eat();
+			sem_post(chopsticks[0]);
+			sem_post(chopsticks[1]);
+			cycles++;
+			thinking();
+		}
+
 	}while(1);
 }
 
+//terminate program and close all semaphores properly.
 void signalHandler(int mysignal)
 {
 	signal(15, signalHandler);
@@ -95,12 +108,13 @@ void signalHandler(int mysignal)
 		sem_close(chopsticks[1]);
 		sem_unlink(buffer1);
 		sem_unlink(buffer2);
+		//sem_destroy(chopstick[i]) used for unamed semaphores.
 	}
 	fprintf(stderr, "Philosopher%d completed %d cycles\n", phil+1, cycles);
 	exit(0);
 }
 
-//done
+//Eat and think functions. 
 void eat()
 {
 	srand(time(0));
