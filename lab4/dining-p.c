@@ -81,7 +81,7 @@ void eat_and_think_cycle()
 		//check if chopsticks are being used (if either sem_values == 0). If either left or right chopstick is being used then don't pick any of them up, else pick both up.
 		sem_getvalue(chopsticks[0], &sem_val_chopstick1);
 		sem_getvalue(chopsticks[1], &sem_val_chopstick2); 
-		//loop until both semaphores are available
+		//loop until both semaphores are available, this prevents deadlock. 
 		if(sem_val_chopstick1 == 0 || sem_val_chopstick2 == 0)
 			continue;
 		else
