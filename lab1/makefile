@@ -1,6 +1,6 @@
 EXECUTABLES=time-4-baby-and-me
-SRC=main.c
-OBJ=main.o
+SRC=time-4-baby-and-me.c
+OBJ=time-4-baby-and-me.o
 
 CC=gcc
 CFLAGS=-g -Wall -Wextra
