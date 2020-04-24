@@ -132,7 +132,7 @@ void eat()
 	srand(time(0));
 	int random = rand() % (1000000 + 1 - 0) + 0;
 	usleep(random);
-	printf("Philosopher %d is eating. PID: %d\n", phil, getpid());
+	printf("Philosopher %d is eating.\n", phil);
 }
 
 void thinking()
@@ -140,5 +140,5 @@ void thinking()
 	srand(time(0));
 	int random = rand() % (1000000 + 1 - 0) + 0;
 	usleep(random);
-	printf("Philosopher %d is thinking. PID: %d\n", phil, getpid());
+	printf("Philosopher %d is thinking.\n", phil);
 }
