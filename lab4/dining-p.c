@@ -29,11 +29,10 @@ char buffer2[50];
 int main(int argc, char* argv[])
 {
 	(void) argc;
-//seats
+	//seats
 	seats = atoi(argv[1]);
-//curent philosopher we start at 1
+	//current philosopher position. We start from 1, but have to map it to 0. 
 	phil = atoi(argv[2]) - 1;
-	//
 	if(phil+1 > seats)
 	{
 		printf("not enough seats\n");
@@ -55,8 +54,8 @@ void initializeSemapores()
 	sprintf(phil_chop_index_1, "%d", phil);
 	sprintf(phil_chop_index_2, "%d", (phil+1)%seats);
 	//we have a char buffer that maps to the sem name
-	buffer1[0] = '/'; buffer1[1] = 'z'; strcat(buffer1, phil_chop_index_1);
-	buffer2[0] = '/'; buffer2[1] = 'z'; strcat(buffer2, phil_chop_index_2);
+	buffer1[0] = '/'; buffer1[1] = 'c'; strcat(buffer1, phil_chop_index_1);
+	buffer2[0] = '/'; buffer2[1] = 'c'; strcat(buffer2, phil_chop_index_2);
 
 	//open the buffers
 	chopsticks[0] = sem_open(buffer1, O_CREAT, 0666, 1);
@@ -70,9 +69,9 @@ void initializeSemapores()
 
 void eat_and_think_cycle()
 {
-//setup a signal handler to catch SIGTERM and display cycles
+	//setup a signal handler to catch SIGTERM and display cycles
 	signal(15, signalHandler);
-//open up our semaphores to be used with
+	//open up our semaphores to be used with
 	do
 	{
 		//used to store value of semaphores to prevent deadlock.
@@ -120,7 +119,7 @@ void eat()
 	srand(time(0));
 	int random = rand() % (1000000 + 1 - 0) + 0;
 	usleep(random);
-	printf("Philosopher %d is eating pid %d\n", phil+1, getpid());
+	printf("Philosopher %d is eating\n", phil+1);
 }
 
 void thinking()
@@ -128,5 +127,5 @@ void thinking()
 	srand(time(0));
 	int random = rand() % (1000000 + 1 - 0) + 0;
 	usleep(random);
-	printf("Philosopher %d is thinking pid %d\n", phil+1, getpid());
+	printf("Philosopher %d is thinking\n", phil+1);
 }
