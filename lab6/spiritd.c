@@ -114,20 +114,22 @@ void sig_handler(int sig)
 		{
 			kill(mole1_pid, SIGKILL);
 		}
-
-		//this should go in create mole, mole1 is picked then fork to mole1
-		mole1_pid = fork();
-
-		if(mole1_pid == 0)
-		{
-			createMole();
-		}
-		else if(mole1_pid > 0)
-		{
-			return;
-		}
+		//create mole
+		createMole();
 	}
 
+
+	else if(sig == SIGUSR2)
+	{
+		int mole2_status;
+		//If mole 1 exists then kill it. Create a new mole afterwards... 
+		if(waitpid(mole2_pid, &mole2_status, WNOHANG) == 0)
+		{
+			kill(mole2_pid, SIGKILL);
+		}
+		//create mole
+		createMole();
+	}
 }
 
 void createMole()
@@ -137,11 +139,38 @@ void createMole()
 	char* args[3];
 	char* mole_num;
 	if(random == 1)
+	{
+		mole1_pid = fork();
 		mole_num = "1";
+		//child of daemon will execute mole1
+		if(mole1_pid == 0)
+		{
+			args[0] = path_to_mole;
+			args[1] = mole_num;
+			args[2] = NULL;
+			execv(args[0], args);
+		}
+		else
+		{
+			return;
+		}
+	}
 	else
+	{
+		mole2_pid = fork();
 		mole_num = "2";
-	args[0] = path_to_mole;
-	args[1] = mole_num;
-	args[2] = NULL;
-	execv(args[0], args);
+		//child of daemon will execute mole1
+		if(mole2_pid == 0)
+		{
+			args[0] = path_to_mole;
+			args[1] = mole_num;
+			args[2] = NULL;
+			execv(args[0], args);
+		}
+		else
+		{
+			return;
+		}
+	}
+
 }
