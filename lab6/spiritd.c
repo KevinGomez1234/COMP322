@@ -91,16 +91,19 @@ void sig_handler(int sig)
 	//if mole1 or mole 2 != then it is the current process, so kill it. and then finally end the current process which is the deamon.
 	if(sig == SIGTERM)
 	{
+		int mole1_status;
+		int mole2_status;
 		//check if the process exists, if process exists
-		if(kill(mole1_pid, 0)== 0)
+		if(waitpid(mole1_pid, &mole1_status, WNOHANG) == 0)
 		{
-			kill(mole1_pid, SIGTERM);
+			kill(mole1_pid, SIGKILL);
 		}
 
-		else if(kill(mole1_pid, 0)== 0)
+		if(waitpid(mole2_pid, &mole2_status, WNOHANG) == 0)
 		{
-			kill(mole2_pid, SIGTERM);
+			kill(mole2_pid, SIGKILL);
 		}
+
 		//exit out of Deamon process
 		kill(getpid(), SIGKILL);
 	}
@@ -172,5 +175,4 @@ void createMole()
 			return;
 		}
 	}
-
 }
