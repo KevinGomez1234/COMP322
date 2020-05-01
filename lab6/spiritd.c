@@ -10,22 +10,24 @@
 #include <syslog.h>
 #include <limits.h> //used for getting the path to C file 
 #include <string.h>
+#include <sys/wait.h>
+
 
 void sig_handler();
 void createMole();
 
-int mole1;
-int mole2;
+pid_t mole1_pid;
+pid_t mole2_pid;
+//path to the mole program
+char path_to_mole [PATH_MAX];
+pid_t daemon_pid; 
 int main()
 {
 	pid_t parent_pid;
 	struct rlimit rLimitStruct;
 	int dev_null_fd, log_fd;
-	char cwd [PATH_MAX];
+	char path_to_home [PATH_MAX];
 	//daemon should register 3 signals not child: USR1, USR2, and TERM
-	signal(SIGUSR1, sig_handler);
-	signal(SIGUSR2,sig_handler);
-	signal(SIGTERM, sig_handler);
 
 	//fork a process
 	parent_pid = fork();
@@ -34,97 +36,112 @@ int main()
 	{
 		exit(0);
 	}
-	//any files/directories created  (owner,groups, and other) have permission for read/write.
-	umask(0);
-	//child, create a new session with setsid(2)
-	setsid();	
-	//get the path to the current directory before we switch to root. Used to open the .log file in our project's directory. Alternative use system log (syslog)
-	getcwd(cwd, sizeof(cwd));
-	strcat(cwd, "/lab6.log");
-	printf("cwd: %s\n", cwd);
-	//open the file and make it available to others, owner, and group rwe permissions.
-	log_fd = open(cwd, O_CREAT, 00777);
-	if(log_fd == -1)
-		printf("This is an error\n");
-	//change directory to root
-	chdir("/");
-	//get the maximum number of open files for this process
-	getrlimit(RLIMIT_NOFILE, &rLimitStruct);
-	//open a log file
-	if(rLimitStruct.rlim_max == RLIM_INFINITY)
-		rLimitStruct.rlim_max = 1024;
-	for(unsigned int i = 0; i<rLimitStruct.rlim_max;i++)
-		close(i);
-	dev_null_fd = open("/dev/null", O_RDWR);
-	dup2(dev_null_fd, 0);
-	dup2(dev_null_fd, 1);
-	dup2(dev_null_fd, 2);
-	//while(1)
-	//{
-	//	pause();
-	//}
+	//daemon process
+	else if(parent_pid == 0)
+	{
+		//Start of Daemon
+		//set umask(0) for rwe files
+		umask(0);
+		//print pid daemon and catch signals
+		printf("PID of Deamon: %d\n", getpid());
+		signal(SIGUSR1, sig_handler);
+		signal(SIGUSR2,sig_handler);
+		signal(SIGTERM, sig_handler);
+		//create a new session with setsid(2)
+		setsid();	
+		//Get the path to mole 
+		getcwd(path_to_mole, sizeof(path_to_mole));
+		strcat(path_to_mole, "/mole");
+		printf("%s\n", path_to_mole);
+		//change directory to root
+		chdir("/");
+		//open a file for logging
+		strcat(path_to_home, getenv("HOME"));
+		strcat(path_to_home, "/lab6.log");
+		log_fd = open(path_to_home, O_CREAT, 0777);
+		if(log_fd == -1)
+			perror("open() error ");
+		//get the maximum number of open files for this process, and close them all
+		getrlimit(RLIMIT_NOFILE, &rLimitStruct);
+		if(rLimitStruct.rlim_max == RLIM_INFINITY)
+			rLimitStruct.rlim_max = 1024;
+		for(unsigned int i = 0; i<rLimitStruct.rlim_max;i++)
+			close(i);	
+		//reopen stdin,stdout, and stderror and map them to 
+		dev_null_fd = open("/dev/null", O_RDWR);
+		dup2(dev_null_fd, 0);
+		dup2(dev_null_fd, 1);
+		dup2(dev_null_fd, 2);
+
+		while(1)
+		{
+			pause();
+		}
+	}
+
 	return 0;
 }
 
 //
-void sig_handler(int signal)
+void sig_handler(int sig)
 {
-//if mole1 or mole 2 != then it is the current process, so kill it. and then finally end the current process which is the deamon.
-	if(signal == SIGTERM)
+	//register signal again.
+	signal(sig, sig_handler);
+
+	//if mole1 or mole 2 != then it is the current process, so kill it. and then finally end the current process which is the deamon.
+	if(sig == SIGTERM)
 	{
-		if(mole1 != 0){
-			kill(mole1, SIGTERM);
-			mole1 = 0;
+		//check if the process exists, if process exists
+		if(kill(mole1_pid, 0)== 0)
+		{
+			kill(mole1_pid, SIGTERM);
 		}
-		if(mole2 != 0){
-			kill(mole2, SIGTERM);
-			mole2 = 0;
+
+		else if(kill(mole1_pid, 0)== 0)
+		{
+			kill(mole2_pid, SIGTERM);
 		}
-		exit(0);
+		//exit out of Deamon process
+		kill(getpid(), SIGKILL);
 	}
 
-//kill mole 1 and fork another random mole need to execve mole program and find the path to run it.
-	else if(signal == SIGUSR1)
+//kill mole 1 and fork another random mole need to execve mole program and find the path to run it. If mole 1 does not exist you cannot "wack" so do not do anything
+	else if(sig == SIGUSR1)
 	{
-		if(mole1 != 0)
+		int mole1_status;
+		//If mole 1 exists then kill it. Create a new mole afterwards... 
+		if(waitpid(mole1_pid, &mole1_status, WNOHANG) == 0)
 		{
-			kill(mole1, SIGTERM);
-			mole1 = 0;
+			kill(mole1_pid, SIGKILL);
 		}
-		createMole();
-	}
-//kill mole 2 and fork another random mole
-	else if(signal == SIGUSR2)
-	{
-		if(mole2 != 0)
+
+		//this should go in create mole, mole1 is picked then fork to mole1
+		mole1_pid = fork();
+
+		if(mole1_pid == 0)
 		{
-			kill(mole2, SIGTERM);
-			mole2 = 0;
+			createMole();
 		}
-		createMole();
+		else if(mole1_pid > 0)
+		{
+			return;
+		}
 	}
+
 }
-
 
 void createMole()
 {
 	srand(time(0));
-	char c[100];
-	char* path;
-	int random = (rand()%2) + 1;
+	int random = (rand()%2);
 	char* args[3];
 	char* mole_num;
-
-	path = getcwd(c, 100);
-	strcat(path, "/mole");
-
 	if(random == 1)
-		mole_num = "mole 1";
+		mole_num = "1";
 	else
-		mole_num = "mole 2";
-	args[0] = path;
+		mole_num = "2";
+	args[0] = path_to_mole;
 	args[1] = mole_num;
 	args[2] = NULL;
 	execv(args[0], args);
 }
-

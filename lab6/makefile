@@ -21,4 +21,4 @@ $(EXECUTABLE2): $(SRC2)
 	$(CC) $(CFLAGS) -o $@ $(OBJ2)
 
 clean:
-	rm -f $(EXECUTABLE1) $(EXECUTABLE2)  $(OBJ1) $(OBJ2) *~ 
+	rm -f $(EXECUTABLE1) $(EXECUTABLE2) $(OBJ1) $(OBJ2) $(LOGFILE) *~ 
