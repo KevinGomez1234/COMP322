@@ -1,6 +1,5 @@
 EXECUTABLE1=spiritd 
 EXECUTABLE2=mole
-LOGFILE = lab6.log
 
 SRC1=spiritd.c
 SRC2=mole.c
@@ -21,4 +20,4 @@ $(EXECUTABLE2): $(SRC2)
 	$(CC) $(CFLAGS) -o $@ $(OBJ2)
 
 clean:
-	rm -f $(EXECUTABLE1) $(EXECUTABLE2) $(OBJ1) $(OBJ2) $(LOGFILE) *~ 
+	rm -f $(EXECUTABLE1) $(EXECUTABLE2) $(OBJ1) $(OBJ2) *~ 
