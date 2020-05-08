@@ -15,20 +15,17 @@
 
 void sig_handler();
 void createMole();
-
+//used to distinguish mole1 and mole2 (USR1 and USR2)
 pid_t mole1_pid;
 pid_t mole2_pid;
 //path to the mole program
 char path_to_mole [PATH_MAX];
-pid_t daemon_pid; 
 int main()
 {
 	pid_t parent_pid;
 	struct rlimit rLimitStruct;
 	int dev_null_fd, log_fd;
 	char path_to_home [PATH_MAX];
-	//daemon should register 3 signals not child: USR1, USR2, and TERM
-
 	//fork a process
 	parent_pid = fork();
 	//Fork a processs and terminate the parent
@@ -75,7 +72,7 @@ int main()
 
 		while(1)
 		{
-			pause();
+			//wait
 		}
 	}
 
@@ -88,7 +85,7 @@ void sig_handler(int sig)
 	//register signal again.
 	signal(sig, sig_handler);
 
-	//if mole1 or mole 2 != then it is the current process, so kill it. and then finally end the current process which is the deamon.
+	//Kill mole1 or mole2 if they exist and terminate the daemon.
 	if(sig == SIGTERM)
 	{
 		int mole1_status;
@@ -107,8 +104,7 @@ void sig_handler(int sig)
 		//exit out of Deamon process
 		kill(getpid(), SIGKILL);
 	}
-
-//kill mole 1 and fork another random mole need to execve mole program and find the path to run it. If mole 1 does not exist you cannot "wack" so do not do anything
+	//kill mole1 process and fork another process.
 	else if(sig == SIGUSR1)
 	{
 		int mole1_status;
@@ -120,8 +116,7 @@ void sig_handler(int sig)
 		//create mole
 		createMole();
 	}
-
-
+	//kill mole2 process and fork another child.
 	else if(sig == SIGUSR2)
 	{
 		int mole2_status;
