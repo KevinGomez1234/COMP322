@@ -12,10 +12,10 @@
 #include <string.h>
 #include <sys/wait.h>
 
-
 void sig_handler();
 void createMole();
 //used to distinguish mole1 and mole2 (USR1 and USR2)
+
 pid_t mole1_pid;
 pid_t mole2_pid;
 //path to the mole program
@@ -40,7 +40,6 @@ int main()
 		//set umask(0) for rwe files
 		umask(0);
 		//print pid daemon and catch signals
-		printf("PID of Deamon: %d\n", getpid());
 		signal(SIGUSR1, sig_handler);
 		signal(SIGUSR2,sig_handler);
 		signal(SIGTERM, sig_handler);
@@ -49,7 +48,6 @@ int main()
 		//Get the path to mole 
 		getcwd(path_to_mole, sizeof(path_to_mole));
 		strcat(path_to_mole, "/mole");
-		printf("%s\n", path_to_mole);
 		//change directory to root
 		chdir("/");
 		//open a file for logging
@@ -69,17 +67,14 @@ int main()
 		dup2(dev_null_fd, 0);
 		dup2(dev_null_fd, 1);
 		dup2(dev_null_fd, 2);
-
 		while(1)
 		{
-			//wait
+			pause();
 		}
 	}
-
 	return 0;
 }
 
-//
 void sig_handler(int sig)
 {
 	//register signal again.
@@ -113,10 +108,15 @@ void sig_handler(int sig)
 		{
 			kill(mole1_pid, SIGKILL);
 		}
+		//if we called SIGUSR1 and mole2 is processing, then don't do anything because user made a mistake "wacking" the wrong mole. This prevents us from creating more than 3 processes.... 
+		else if(waitpid(mole2_pid, &mole1_status, WNOHANG) == 0)
+		{
+			return;
+		}
 		//create mole
 		createMole();
 	}
-	//kill mole2 process and fork another child.
+	//kill mole2 if it exists and fork another process.
 	else if(sig == SIGUSR2)
 	{
 		int mole2_status;
@@ -125,11 +125,17 @@ void sig_handler(int sig)
 		{
 			kill(mole2_pid, SIGKILL);
 		}
+		//if we called SIGUSR2 and mole1 is processing, then don't do anything because user made a mistake. This prevents us from creating more than 3 processes....
+		else if(waitpid(mole1_pid, &mole2_status, WNOHANG) == 0)
+		{
+			return;
+		}
 		//create mole
 		createMole();
 	}
 }
 
+//create mole1 or mole2 process. 
 void createMole()
 {
 	srand(time(0));
@@ -148,10 +154,6 @@ void createMole()
 			args[2] = NULL;
 			execv(args[0], args);
 		}
-		else
-		{
-			return;
-		}
 	}
 	else
 	{
@@ -165,9 +167,6 @@ void createMole()
 			args[2] = NULL;
 			execv(args[0], args);
 		}
-		else
-		{
-			return;
-		}
+
 	}
 }
